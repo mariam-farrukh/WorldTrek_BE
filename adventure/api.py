@@ -8,24 +8,24 @@ from .models import *
 from rest_framework.decorators import api_view
 import json
 from rest_framework import serializers, viewsets
-from util.create_world import create
+
 
 # instantiate pusher
 # pusher = Pusher(app_id=config('PUSHER_APP_ID'), key=config('PUSHER_KEY'), secret=config('PUSHER_SECRET'), cluster=config('PUSHER_CLUSTER'))
-class RoomSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Room
-        fields = ('id', 'title', 'description', 'n_to', 's_to', 'e_to', 'w_to')
-class RoomViewSet(viewsets.ModelViewSet):
-    serializer_class = RoomSerializer
-    queryset = Room.objects.all()
-    # def get_queryset(self):
-    #     user = self.request.user
-    #     if user.is_anonymous:
-    #         return Room.objects.none()
-    #     else:
-    #         return Room.objects.filter(user=user)
-@csrf_exempt
+# class RoomSerializer(serializers.HyperlinkedModelSerializer):
+#     class Meta:
+#         model = Room
+#         fields = ('id', 'title', 'description', 'n_to', 's_to', 'e_to', 'w_to')
+# class RoomViewSet(viewsets.ModelViewSet):
+#     serializer_class = RoomSerializer
+#     queryset = Room.objects.all()
+#     # def get_queryset(self):
+#     #     user = self.request.user
+#     #     if user.is_anonymous:
+#     #         return Room.objects.none()
+#     #     else:
+#     #         return Room.objects.filter(user=user)
+# @csrf_exempt
 @api_view(["GET"])
 def initialize(request):
     user = request.user
@@ -35,11 +35,6 @@ def initialize(request):
     room = player.room()
     players = room.playerNames(player_id)
     return JsonResponse({'uuid': uuid, 'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players}, safe=True)
-@api_view(["POST"])
-def createWorld(request):
-    print('create a world')
-    create()
-    return JsonResponse({}, safe=True)
 
 # @csrf_exempt
 @api_view(["POST"])
@@ -77,6 +72,24 @@ def move(request):
         players = room.playerNames(player_id)
         return JsonResponse({'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'error_msg':"You cannot move that way."}, safe=True)
 
+@api_view(["GET"])
+def rooms(request):
+    rooms = Room.objects.all()
+    room = []
+    links = []
+
+    for i in rooms:
+        room.append({"id": i.id, "title": i.title, "x": i.x, "y": i.y})
+        for j in ["n_to", "s_to", "e_to", "w_to"]:
+            z = getattr(i, j)
+            if z > 0:
+                links.append({"source": i.id, "target": z})
+
+    data = {
+        "room": room,
+        "links": links,
+    }
+    return JsonResponse(data, safe=False)
 
 @csrf_exempt
 @api_view(["POST"])
