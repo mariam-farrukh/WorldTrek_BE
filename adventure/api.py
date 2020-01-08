@@ -71,25 +71,19 @@ def move(request):
     else:
         players = room.playerNames(player_id)
         return JsonResponse({'name':player.user.username, 'title':room.title, 'description':room.description, 'players':players, 'error_msg':"You cannot move that way."}, safe=True)
-
+# @csrf_exempt
 @api_view(["GET"])
 def rooms(request):
     rooms = Room.objects.all()
-    room = []
-    links = []
+    map = []
 
     for i in rooms:
-        room.append({"id": i.id, "title": i.title, "x": i.x, "y": i.y})
-        for j in ["n_to", "s_to", "e_to", "w_to"]:
-            z = getattr(i, j)
-            if z > 0:
-                links.append({"source": i.id, "target": z})
+        map.append({"id": i.id, "title": i.title, "x": i.x, "y": i.y,"n_to":i.n_to,"s_to":i.s_to,"e_to":i.e_to,"w_to":i.w_to})
 
     data = {
-        "room": room,
-        "links": links,
+        "map": map,
     }
-    return JsonResponse(data, safe=False)
+    return JsonResponse(data, safe=True)
 
 @csrf_exempt
 @api_view(["POST"])
